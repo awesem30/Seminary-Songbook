@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seminary Songbook - Admin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h2 {
+            color: #4CAF50;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin: 5px 0;
+        }
+        a {
+            text-decoration: none;
+            color: #007BFF;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .lyrics {
+            display: none;
+            margin-top: 10px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+    </style>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+        import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBhHTopJ-6W39Y88z4Y00VhjuJMu9vKGwQ",
+            authDomain: "seminary-songbook.firebaseapp.com",
+            projectId: "seminary-songbook",
+            storageBucket: "seminary-songbook.appspot.com",
+            messagingSenderId: "1066256663632",
+            appId: "1:1066256663632:web:46b750ab9b80abd4247d55",
+            measurementId: "G-VGJ683PZK5"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const database = getDatabase(app);
+
+        function toggleLyrics(id) {
+            var x = document.getElementById(id);
+            if (x.style.display === "none") {
+                x.style.display = "block";
+            } else {
+                x.style.display = "none";
+            }
+        }
+
+        function addSong() {
+            var category = document.getElementById('category').value;
+            var title = document.getElementById('title').value;
+            var lyrics = document.getElementById('lyrics').value;
+
+            const newSongRef = push(ref(database, 'songs'));
+            set(newSongRef, {
+                category: category,
+                title: title,
+                lyrics: lyrics
+            });
+
+            document.getElementById('title').value = '';
+            document.getElementById('lyrics').value = '';
+        }
+
+        function displaySongs() {
+            const songsRef = ref(database, 'songs');
+            onValue(songsRef, (snapshot) => {
+                const songs = snapshot.val();
+                const categories = ['entrance', 'offertory', 'communion', 'recessional'];
+                categories.forEach(category => {
+                    const ul = document.getElementById(category + '-songs');
+                    ul.innerHTML = '';
+                    for (const key in songs) {
+                        if (songs[key].category === category) {
+                            const song = songs[key];
+                            const li = document.createElement('li');
+                            const a = document.createElement('a');
+                            a.href = 'javascript:void(0)';
+                            a.onclick = function() { toggleLyrics(song.title.replace(/\\s+/g, '')) };
+                            a.textContent = song.title;
+
+                            const div = document.createElement('div');
+                            div.id = song.title.replace(/\\s+/g, '');
+                            div.className = 'lyrics';
+                            div.innerHTML = '<p>' + song.lyrics.replace(/\\n/g, '<br>') + '</p>';
+
+                            li.appendChild(a);
+                            ul.appendChild(li);
+                            ul.appendChild(div);
+                        }
+                    }
+                });
+            });
+        }
+
+        window.onload = displaySongs;
+    </script>
+</head>
+<body>
+
+<h1>Seminary Songbook - Admin</h1>
+
+<form onsubmit="addSong(); return false;">
+    <label for="category">Category:</label>
+    <select id="category" required>
+        <option value="entrance">Entrance Songs</option>
+        <option value="offertory">Offertory Songs</option>
+        <option value="communion">Communion Songs</option>
+        <option value="recessional">Recessional Songs</option>
+    </select>
+    <br><br>
+    <label for="title">Title:</label>
+    <input type="text" id="title" required>
+    <br><br>
+    <label for="lyrics">Lyrics:</label>
+    <textarea id="lyrics" rows="4" required></textarea>
+    <br><br>
+    <button type="submit">Add Song</button>
+</form>
+
+<h2>Entrance Songs</h2>
+<ul id="entrance-songs"></ul>
+
+<h2>Offertory Songs</h2>
+<ul id="offertory-songs"></ul>
+
+<h2>Communion Songs</h2>
+<ul id="communion-songs"></ul>
+
+<h2>Recessional Songs</h2>
+<ul id="recessional-songs"></ul>
+
+</body>
+</html>
